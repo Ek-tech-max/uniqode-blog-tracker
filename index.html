@@ -24,6 +24,8 @@
   --s7:#fee2e2;--s7t:#b91c1c;
   --s8:#f5f5f5;--s8t:#555;
   --s9:#bbf7d0;--s9t:#14532d;
+  --s10:#c7d2fe;--s10t:#3730a3;
+  --s11:#d1d5db;--s11t:#374151;
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
 
@@ -77,6 +79,8 @@ tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
 tbody tr:hover{background:var(--surf)}
 tbody tr.flagged{background:rgba(239,68,68,.04)}
 tbody tr.flagged:hover{background:rgba(239,68,68,.08)}
+tbody tr.done-green{background:rgba(34,197,94,.05)}
+tbody tr.done-green:hover{background:rgba(34,197,94,.09)}
 td{padding:9px 10px;vertical-align:middle}
 .url-title{font-weight:500;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .url-slug{font-size:11px;color:var(--muted);font-family:'SF Mono','Fira Code',monospace;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -100,6 +104,14 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1}
 input[type="date"]::-webkit-datetime-edit{cursor:pointer}
 input[type="date"]::-webkit-datetime-edit-fields-wrapper{cursor:pointer}
 .flag{color:#ef4444;font-size:12px}
+.note-pip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:3px;background:#6c63ff22;border:1px solid #6c63ff55;font-size:9px;cursor:default;vertical-align:middle;position:relative}
+.note-pip::after{content:attr(data-note);display:none;position:absolute;left:18px;top:50%;transform:translateY(-50%);background:var(--surf);border:1px solid var(--border);color:var(--text);padding:8px 11px;border-radius:7px;font-size:11px;font-weight:400;white-space:pre-wrap;min-width:180px;max-width:280px;z-index:999;line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,.5);word-break:break-word}
+.note-pip:hover::after{display:block}
+.info-icon{cursor:help;color:var(--muted);font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;background:var(--surf2);border:1px solid var(--border);border-radius:50%;position:relative;vertical-align:middle;margin-left:3px;line-height:1}
+.info-icon::after{content:attr(data-tip);display:none;position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 8px);background:var(--surf);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-size:11px;font-weight:400;white-space:normal;width:250px;z-index:999;line-height:1.55;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.info-icon:hover::after{display:block}
+.info-icon::before{content:'';display:none;position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 3px);border:5px solid transparent;border-bottom-color:var(--border);z-index:1000}
+.info-icon:hover::before{display:block}
 .act-btn{background:none;border:none;cursor:pointer;color:var(--muted);padding:3px 5px;border-radius:4px;font-size:13px}
 .act-btn:hover{color:var(--text);background:var(--surf2)}
 
@@ -138,6 +150,7 @@ input[type="date"]::-webkit-datetime-edit-fields-wrapper{cursor:pointer}
     <span class="sync-label" id="syncLabel"></span>
   </div>
   <div class="nav-right">
+    <button class="btn btn-secondary" onclick="copyShareLink(this)">🔗 Share</button>
     <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
   </div>
 </nav>
@@ -170,19 +183,22 @@ input[type="date"]::-webkit-datetime-edit-fields-wrapper{cursor:pointer}
   <div class="prog-row">
     <div class="prog-track-wrap">
       <div class="prog-labels">
-        <span id="progText">0 of 400 published</span>
+        <span id="progText">0 of 400 actioned</span>
         <span id="progPct">0%</span>
       </div>
       <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
     </div>
     <div class="pills">
       <div class="pill"><span class="n" id="sTotal">—</span><span>Total</span></div>
-      <div class="pill green"><span class="n" id="sPub">0</span><span>Published</span></div>
+      <div class="pill green"><span class="n" id="sPub">0</span><span>Published ✓</span></div>
       <div class="pill"><span class="n" id="sInProg">0</span><span>In Progress</span></div>
-      <div class="pill"><span class="n" id="sMerge">0</span><span>To Merge</span></div>
-      <div class="pill"><span class="n" id="sDel">0</span><span>To Delete</span></div>
-      <div class="pill red"><span class="n" id="sFlag">0</span><span>Flagged</span></div>
+      <div class="pill green"><span class="n" id="sMerge">0</span><span>Merged ✓</span></div>
+      <div class="pill green"><span class="n" id="sDel">0</span><span>Deleted ✓</span></div>
+      <div class="pill red"><span class="n" id="sFlag">0</span><span>Flagged <span class="info-icon" data-tip="An article is flagged when SEO or editorial review has been waiting 2+ business days without a response, or the turnaround took more than 2 business days. Use this for weekly accountability checks.">ⓘ</span></span></div>
     </div>
+  </div>
+  <div style="padding:6px 0 10px;display:flex;align-items:center;gap:6px">
+    <span style="font-size:11px;color:var(--muted)" id="q2WeeksLabel"></span>
   </div>
 </div>
 
@@ -197,11 +213,20 @@ input[type="date"]::-webkit-datetime-edit-fields-wrapper{cursor:pointer}
     <option value="">All statuses</option>
     <option>Not Started</option><option>Drafted</option><option>SEO Review</option>
     <option>SEO Done</option><option>Editorial Review</option><option>Done</option>
-    <option>To Be Merged</option><option>To Be Deleted</option><option>Keep</option><option>Published</option>
+    <option>To Be Merged</option><option>Merged</option>
+    <option>To Be Deleted</option><option>Deleted</option>
+    <option>Keep</option><option>Published</option>
   </select>
   <select id="fFlag" onchange="render()">
-    <option value="">All</option>
-    <option value="1">Flagged only</option>
+    <option value="">All articles</option>
+    <option value="flagged">🚩 Flagged</option>
+    <option value="notstarted">◻ Not Started</option>
+    <option value="inprogress">📝 In Progress</option>
+    <option value="published">✅ Published</option>
+    <option value="tobeMerged">↪ To Be Merged</option>
+    <option value="merged">🔀 Merged (done)</option>
+    <option value="tobeDeleted">✂ To Be Deleted</option>
+    <option value="deleted">🗑 Deleted (done)</option>
   </select>
   <div class="controls-right">
     <input type="text" id="searchInput" placeholder="Search URL or title…" oninput="render()">
@@ -248,7 +273,9 @@ input[type="date"]::-webkit-datetime-edit-fields-wrapper{cursor:pointer}
         <select id="fStatus2">
           <option>Not Started</option><option>Drafted</option><option>SEO Review</option>
           <option>SEO Done</option><option>Editorial Review</option><option>Done</option>
-          <option>To Be Merged</option><option>To Be Deleted</option><option>Keep</option><option>Published</option>
+          <option>To Be Merged</option><option>Merged</option>
+          <option>To Be Deleted</option><option>Deleted</option>
+          <option>Keep</option><option>Published</option>
         </select>
       </div>
       <div class="fg"><label>SEO Sent</label><input id="fSeoSent" type="date"></div>
@@ -278,6 +305,8 @@ const STATUS_CFG = {
   'To Be Deleted':    {bg:'var(--s7)',color:'var(--s7t)',dot:'#ef4444'},
   'Keep':             {bg:'var(--s8)',color:'var(--s8t)',dot:'#777'},
   'Published':        {bg:'var(--s9)',color:'var(--s9t)',dot:'#16a34a'},
+  'Merged':           {bg:'var(--s10)',color:'var(--s10t)',dot:'#4f46e5'},
+  'Deleted':          {bg:'var(--s11)',color:'var(--s11t)',dot:'#6b7280'},
 };
 const STATUSES = Object.keys(STATUS_CFG);
 const TARGET = 400;
@@ -369,7 +398,7 @@ function bizDaysBetween(startStr, endStr) {
   return c;
 }
 
-const RESOLVED = new Set(['Published','Done','To Be Merged','To Be Deleted','Keep']);
+const RESOLVED = new Set(['Published','Done','To Be Merged','To Be Deleted','Keep','Merged','Deleted']);
 function isStuck(a) {
   // Currently waiting — overdue (no return date yet)
   if (!RESOLVED.has(a.status)) {
@@ -429,7 +458,14 @@ function render() {
   const list = Object.values(articles).filter(a => {
     if (ownerF  && a.assignedTo !== ownerF) return false;
     if (statusF && a.status !== statusF)    return false;
-    if (flagF==='1' && !isStuck(a))         return false;
+    if (flagF==='flagged'     && !isStuck(a)) return false;
+    if (flagF==='published'   && a.status !== 'Published') return false;
+    if (flagF==='merged'      && a.status !== 'Merged') return false;
+    if (flagF==='deleted'     && a.status !== 'Deleted') return false;
+    if (flagF==='tobeMerged'  && a.status !== 'To Be Merged') return false;
+    if (flagF==='tobeDeleted' && a.status !== 'To Be Deleted') return false;
+    if (flagF==='inprogress'  && !['Drafted','SEO Review','SEO Done','Editorial Review','Done'].includes(a.status)) return false;
+    if (flagF==='notstarted'  && a.status !== 'Not Started') return false;
     if (search && !a.url.toLowerCase().includes(search) && !a.title.toLowerCase().includes(search)) return false;
     return true;
   });
@@ -460,8 +496,9 @@ function render() {
       const editBackLate = a.editBack && editTurn > 2;
       const editAge      = editSentLate ? editWait : (editBackLate ? editTurn : 0);
       const shortUrl = a.url.replace('https://www.uniqode.com','');
-      return `<tr class="${stuck?'flagged':''}" id="row-${a.id}">
-        <td>${stuck?'<span class="flag" title="Stuck 2+ business days">⚑</span>':''}</td>
+      const doneGreen = ['Published','Merged'].includes(a.status);
+      return `<tr class="${stuck?'flagged':doneGreen?'done-green':''}" id="row-${a.id}">
+        <td style="white-space:nowrap">${stuck?'<span class="flag" title="Stuck 2+ business days">⚑</span>':''}${a.notes?`<span class="note-pip" data-note="${a.notes.replace(/"/g,'&quot;').replace(/\n/g,'&#10;')}">📝</span>`:''}</td>
         <td>
           <div class="url-title" title="${a.title||shortUrl}">${a.title||shortUrl}</div>
           <div class="url-slug"><a href="${a.url}" target="_blank">${shortUrl}</a></div>
@@ -495,10 +532,11 @@ function updateStats() {
   const all = Object.values(articles);
   const pub  = all.filter(a=>a.status==='Published').length;
   const inp  = all.filter(a=>['Drafted','SEO Review','SEO Done','Editorial Review','Done'].includes(a.status)).length;
-  const mrg  = all.filter(a=>a.status==='To Be Merged').length;
-  const del  = all.filter(a=>a.status==='To Be Deleted').length;
+  const mrg  = all.filter(a=>a.status==='Merged').length;
+  const del  = all.filter(a=>a.status==='Deleted').length;
   const flg  = all.filter(isStuck).length;
-  const pct  = Math.round(pub/TARGET*100);
+  const actioned = pub + mrg + del;
+  const pct  = Math.round(actioned/TARGET*100);
 
   document.getElementById('sTotal').textContent  = all.length;
   document.getElementById('sPub').textContent    = pub;
@@ -506,9 +544,21 @@ function updateStats() {
   document.getElementById('sMerge').textContent  = mrg;
   document.getElementById('sDel').textContent    = del;
   document.getElementById('sFlag').textContent   = flg;
-  document.getElementById('progText').textContent= `${pub} of ${TARGET} published`;
+  document.getElementById('progText').textContent= `${actioned} of ${TARGET} actioned`;
   document.getElementById('progPct').textContent = `${pct}%`;
   document.getElementById('progFill').style.width= `${pct}%`;
+  // Q2 countdown
+  const q2End = new Date(2026, 5, 30); // June 30 2026
+  const today = new Date(); today.setHours(0,0,0,0);
+  const msLeft = q2End - today;
+  const daysLeft = Math.max(0, Math.ceil(msLeft / 86400000));
+  const weeksLeft = Math.floor(daysLeft / 7);
+  const extraDays = daysLeft % 7;
+  const label = document.getElementById('q2WeeksLabel');
+  if (label) {
+    const urgency = weeksLeft < 3 ? 'color:#ef4444;font-weight:700' : 'color:var(--muted)';
+    label.innerHTML = `<span style="${urgency}">⏳ ${weeksLeft} week${weeksLeft!==1?'s':''} ${extraDays>0?`${extraDays}d `:''}left in Q2 2026</span>`;
+  }
 }
 
 // ─── MODAL ────────────────────────────────────────────────────────────────────
@@ -561,6 +611,16 @@ function saveArticle() {
 function deleteArt(id) {
   if (!confirm('Delete this article from the tracker?')) return;
   db.ref('articles/'+id).remove();
+}
+
+// ─── SHARE ────────────────────────────────────────────────────────────────────
+function copyShareLink(btn) {
+  navigator.clipboard.writeText('https://ek-tech-max.github.io/uniqode-blog-tracker/').then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.color = '#22c55e';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
+  });
 }
 
 // ─── EXPORT ───────────────────────────────────────────────────────────────────
