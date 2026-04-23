@@ -139,7 +139,6 @@ input[type="date"]::-webkit-datetime-edit-fields-wrapper{cursor:pointer}
   </div>
   <div class="nav-right">
     <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
-    <button class="btn btn-secondary" onclick="showSetup()">⚙ Firebase</button>
   </div>
 </nav>
 
@@ -292,7 +291,15 @@ let articles = {};  // id → article object
 let editingId = null;
 
 function loadConfig() {
-  try { return JSON.parse(localStorage.getItem('fb_config')||'null'); } catch(e){ return null; }
+  return {
+    apiKey: "AIzaSyD7yci65zhrts5kz2F0l5gLgA76vnEtQu8",
+    authDomain: "q2-blog-cleanup.firebaseapp.com",
+    databaseURL: "https://q2-blog-cleanup-default-rtdb.firebaseio.com",
+    projectId: "q2-blog-cleanup",
+    storageBucket: "q2-blog-cleanup.firebasestorage.app",
+    messagingSenderId: "129516626081",
+    appId: "1:129516626081:web:2decf5980c213e8cee10e0"
+  };
 }
 
 function initFirebase(cfg) {
